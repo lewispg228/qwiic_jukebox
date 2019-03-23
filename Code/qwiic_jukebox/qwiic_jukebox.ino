@@ -36,65 +36,138 @@
   SparkFun Qwiic RFID board goes LOW indicating a tag has been scanned.
 */
 
+// also some code by graham
+
 #include <Wire.h>
 
-byte mp3Address = 0x37; //Unshifted 7-bit default address for Qwiic MP3
+#include "SparkFun_Qwiic_MP3_Trigger_Arduino_Library.h" //http://librarymanager/All#SparkFun_MP3_Trigger
+MP3TRIGGER mp3;
 
-byte track = 0; // global variable to stroe which track number we'd like to play, 
-                // this is updated when we see a new rfid tag come in.
+byte track = 0; // global variable to store which track number we'd like to play,
+// this is updated when we see a new rfid tag come in.
+
+int playPin = A0;
+int stopPin = A2;
+
+// statuses used to know how to react to play and stop buttons
+#define STOPPED 0
+#define PAUSED 1
+#define PLAYING 2
+byte jukebox_status = STOPPED;
+
+boolean paused = false;
+
 void setup()
 {
   Serial.begin(9600);
 
+  pinMode(playPin, INPUT_PULLUP);
+  pinMode(stopPin, INPUT_PULLUP);
+
   Wire.begin();
 
   //Check to see if MP3 is present
-  if (mp3IsPresent() == false)
+  if (mp3.begin() == false)
   {
     Serial.println("Qwiic MP3 failed to respond. Please check wiring and possibly the I2C address. Freezing...");
     while (1);
   }
 
-  mp3ChangeVolume(15); //Volume can be 0 (off) to 31 (max)
+  mp3.setVolume(15); //Volume can be 0 (off) to 31 (max)
+  Serial.println("Qwiic JukeBox");
 
   Serial.print("Song count: ");
-  Serial.println(mp3SongCount());
-
-  Serial.println("Press S to stop or P to pause.");
-
-  //mp3PlayFile(3); //Play file F003.mp3
+  Serial.println(mp3.getSongCount());
 }
 
 void loop()
 {
   if (checkTagID() == true) // returns true if a new RFID tag has been placed, and it is found in tagList
   {
-    Serial.println("gonna play a track now...");
-    mp3Stop();
-    delay(100);
-    mp3PlayFile(track); //Play the new track (for example, if track = 3, then "F003.mp3")
-  }
-  delay(1000); // Slow it down
-
-  if (Serial.available() == true) //pull in any serial that arrives
-  {
-    byte incoming = Serial.read();
-
-    switch (incoming)
+    Serial.println("new tag detected");
+    Serial.print("track: ");
+    Serial.println(track, DEC);
+    switch (jukebox_status)
     {
-      case 'S':
-      case 's':
-        mp3Stop();
+      case STOPPED: // ignore
         break;
-      case 'P':
-      case 'p':
-        mp3Pause(); //Pause, or play from pause, the current track
-        break;
-      default:
-        Serial.print("Unknown character: ");
-        Serial.write(incoming);
-        Serial.println();
-        break;
+      case PAUSED:
+        {
+          mp3.stop();
+          jukebox_status = STOPPED;
+          break;
+        }
+      case PLAYING:
+        {
+          mp3.stop();
+          jukebox_status = STOPPED;
+          break;
+        }
     }
   }
+
+  if (digitalRead(playPin) == LOW)
+  {
+    Serial.println("play pressed");
+    switch (jukebox_status)
+    {
+      case STOPPED:
+        {
+          mp3.playFile(track); // start playing track from beginning
+          jukebox_status = PLAYING;
+          break;
+        }
+      case PAUSED:
+        {
+          mp3.pause(); // resume with pause funtion
+          jukebox_status = PLAYING;
+          break;
+        }
+      case PLAYING:
+        break; // ignore if we are already playing
+    }
+  }
+  else if (digitalRead(stopPin) == LOW)
+  {
+    Serial.println("stop pressed");
+    switch (jukebox_status)
+    {
+      case STOPPED:
+        break; // ignore if we are already stopped.
+      case PAUSED:
+        break; // ignore if we are already paused.
+      case PLAYING:
+        {
+          // first send pause command, then find out if we want to stop or leave as paused
+          mp3.pause();
+          jukebox_status = PAUSED;
+          while (digitalRead(stopPin) == LOW) // wait for release
+            delay(100); // debounce
+            
+          // button has been released
+          // count how long it's been HIGH, if too long, then consider it a "single press" (aka STOP)
+          int counter = 0;
+          while (digitalRead(stopPin) == HIGH)
+          {
+            counter++;
+            Serial.println(counter);
+            delay(100);
+            if (counter >= 10)
+            {
+              Serial.println("timed out on double-press. STOPPED");
+              mp3.stop();
+              jukebox_status = STOPPED;
+              break;
+            }
+          }
+          if (counter < 10)
+          {
+            Serial.println("double-press detected. PAUSED");
+            jukebox_status = PAUSED;
+          }
+          break;
+        }
+    }
+  }
+  delay(100); // debounce
 }
