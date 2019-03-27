@@ -15,6 +15,8 @@ byte lightPins[] = {A0, A1, A2, A3};
 // store the light values in an array
 int lightValues[] = {0, 0, 0, 0};
 
+byte track = 0; /// global variable to store current selected track
+
 void setup() {
   // put your setup code here, to run once:
   for (int i = 0 ; i < 4 ; i++)
@@ -32,9 +34,11 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(500);
+  delay(100);
   readLightSensors();
   printLightValues();
+  blink(track);
+  delay(1000);
 
 }
 
@@ -42,9 +46,11 @@ void readLightSensors()
 {
   for (int i = 0 ; i < 4 ; i++)
   {
-    delay(10);
-    lightValues[i] = analogRead(lightPins[i]);
+    delay(5);
+    //lightValues[i] = analogRead(lightPins[i]);
+    lightValues[i] = readQD(lightPins[i]);
   }
+  valuesToNumber();
 }
 
 void printLightValues()
@@ -55,7 +61,7 @@ void printLightValues()
     Serial.print(lightValues[i]);
     Serial.print("\t");
   }
-  Serial.print(valuesToNumber(), DEC);
+  Serial.print(track, DEC);
   Serial.println();
 }
 
@@ -77,7 +83,7 @@ byte valuesToNumber()
 
   // create threshhold
   //int threshhold = ( maxVal - (maxVal / 3) );
-  int threshhold = 100;
+  int threshhold = 400;
   //Serial.print("\n\rthreshhold: ");
   //Serial.println(threshhold);
 
@@ -88,5 +94,46 @@ byte valuesToNumber()
       number |= (1 << i);  // set the bit
     }
   }
+  track = number;
   return number;
+}
+
+
+int readQD(byte QRE1113_Pin)
+{
+  //Returns value from the QRE1113
+  //Lower numbers mean more refleacive
+  //More than 3000 means nothing was reflected.
+  pinMode( QRE1113_Pin, OUTPUT );
+  digitalWrite( QRE1113_Pin, HIGH );
+  delayMicroseconds(10);
+  pinMode( QRE1113_Pin, INPUT );
+
+  long time = micros();
+
+  //time how long the input is HIGH, but quit after 3ms as nothing happens after that
+  int timeout = 1500;
+  while (timeout)
+  {
+    if (digitalRead(QRE1113_Pin) == LOW)
+    {
+      break;
+    }
+    timeout--;
+  }
+  int diff = (micros() - time);
+  return diff;
+}
+
+void blink(byte times)
+{
+  pinMode(13, OUTPUT);
+  for (int i = 0 ; i < times ; i++)
+  {
+    digitalWrite(13, HIGH);
+    delay(100);
+    digitalWrite(13, LOW);
+    delay(500);
+  }
+
 }
