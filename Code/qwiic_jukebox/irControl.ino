@@ -29,6 +29,7 @@ boolean checkIRID()
     Serial.print("\tc: ");
     Serial.print(currentRead);
   }
+  delay(10); // if no serial, need to wait
 
   if ( previousRead == currentRead && currentRead != 0) sameReadCount++; // if they are the same and non-zero
   else sameReadCount = 0; // reset
@@ -38,6 +39,7 @@ boolean checkIRID()
     Serial.print("\tsameReadCount: ");
     Serial.print(sameReadCount);
   }
+  delay(10); // if no serial, need to wait
 
   previousRead = currentRead; // remember for the check next time we read
 

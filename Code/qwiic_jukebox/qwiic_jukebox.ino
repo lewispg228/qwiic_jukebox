@@ -77,7 +77,7 @@ void setup()
 {
   Serial.begin(115200);
   Serial.println("Jukebox booting up...");
-  delay(2000); // wait for Qwiic MP3 board to bootup
+  delay(3000); // wait for Qwiic MP3 board to bootup
 
   pinMode(playPin, INPUT_PULLUP);
   pinMode(stopPin, INPUT_PULLUP);
@@ -103,10 +103,11 @@ void setup()
 
   mp3.setVolume(15); //Volume can be 0 (off) to 31 (max)
   Serial.println("Qwiic JukeBox");
+  delay(10); // if no serial, need to wait
 
   Serial.print("Song count: ");
   songCount = mp3.getSongCount();
-  Serial.println(songCount);
+  delay(10); // if no serial, need to wait
 }
 
 void loop()
@@ -120,6 +121,7 @@ void loop()
     Serial.println("new tag detected");
     Serial.print("track: ");
     Serial.println(track, DEC);
+    delay(10); // if no serial, need to wait
     switch (jukebox_status)
     {
       case STOPPED: // ignore
@@ -144,6 +146,7 @@ void loop()
   if (digitalRead(playPin) == LOW)
   {
     Serial.println("play pressed");
+    delay(10); // if no serial, need to wait
     switch (jukebox_status)
     {
       case STOPPED:
@@ -169,6 +172,7 @@ void loop()
   else if (digitalRead(stopPin) == LOW)
   {
     Serial.println("stop pressed");
+    delay(10); // if no serial, need to wait
     switch (jukebox_status)
     {
       case STOPPED:
@@ -190,8 +194,8 @@ void loop()
           {
             counter++;
             Serial.println(counter);
-            delay(100);
-            if (counter >= 10)
+            delay(10);
+            if (counter >= 100)
             {
               Serial.println("timed out on double-press. STOPPED");
               mp3.stop();
@@ -199,7 +203,7 @@ void loop()
               break;
             }
           }
-          if (counter < 10)
+          if (counter < 100)
           {
             Serial.println("double-press detected. PAUSED");
             jukebox_status = PAUSED;
@@ -208,7 +212,7 @@ void loop()
         }
     }
   }
-  if(GLOBAL_DEBUG)
+  if (GLOBAL_DEBUG)
   {
     Serial.print("\ttrack: ");
     Serial.println(track);
