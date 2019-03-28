@@ -7,7 +7,7 @@
    Each card has 4 spots on it, and you can draw in with a dark marker the binary number.
 */
 
-boolean checkIRID()
+boolean checkIRID(boolean debug)
 {
   // pull in 4 readings
   // make sure they are the same.
@@ -16,15 +16,15 @@ boolean checkIRID()
 
   byte trackReadings[] = {0, 0, 0, 0}; // used to store 4 sequencial readings.
 
-  //Serial.print("trackReadings:");
+  if(debug) Serial.print("trackReadings:");
   for (byte i = 0 ; i < 4 ; i++)
   {
     readLightSensors();
     trackReadings[i] = valuesToNumber();
-    //Serial.print(trackReadings[i]);
+    if(debug) Serial.print(trackReadings[i]);
     delay(100);
   }
-  //Serial.println();
+  if(debug) Serial.println();
   if (
     (trackReadings[0] != track) &&    // only report changes (i.e. something new)
     (trackReadings[0] != 0) &&        // "0" means there is no card in there.
@@ -93,8 +93,15 @@ byte valuesToNumber()
       number |= (1 << i);  // set the bit
     }
   }
-  //  track = number;
-  return number;
+  // ensure a good conversion. exlude 0 and 15.
+  if ((number > 0) && (number < 15))
+  {
+    return number;
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 

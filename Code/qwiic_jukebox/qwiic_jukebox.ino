@@ -57,6 +57,9 @@ byte jukebox_status = STOPPED;
 
 boolean paused = false;
 
+byte songCount = 0; // set in setup, by caling mp3.getSongCount()
+// used to ensure we only send valid file numbers to play
+
 
 // the 4 IR sensors
 byte lightPins[] = {7, 6, 5, 4};
@@ -67,6 +70,8 @@ int lightValues[] = {0, 0, 0, 0};
 void setup()
 {
   Serial.begin(9600);
+  Serial.println("Jukebox booting up...");
+  delay(2000); // wait for Qwiic MP3 board to bootup
 
   pinMode(playPin, INPUT_PULLUP);
   pinMode(stopPin, INPUT_PULLUP);
@@ -94,7 +99,8 @@ void setup()
   Serial.println("Qwiic JukeBox");
 
   Serial.print("Song count: ");
-  Serial.println(mp3.getSongCount());
+  songCount = mp3.getSongCount();
+  Serial.println(songCount);
 }
 
 void loop()
@@ -102,7 +108,7 @@ void loop()
   if (
     (checkTagID() == true) // returns true if a new RFID tag has been placed, and it is found in tagList
     ||
-    (checkIRID() == true) // returns true if new IR card has been placed in pocket reader, updates global track variable if non-zero.
+    (checkIRID(true) == true) // returns true if new IR card has been placed in pocket reader, updates global track variable if non-zero.
   )
   {
     Serial.println("new tag detected");
@@ -134,8 +140,12 @@ void loop()
     {
       case STOPPED:
         {
-          mp3.playFile(track); // start playing track from beginning
-          jukebox_status = PLAYING;
+          // ensure valid track number
+          if ((track != 0) && (track <= songCount))
+          {
+            mp3.playFile(track); // start playing track from beginning
+            jukebox_status = PLAYING;
+          }
           break;
         }
       case PAUSED:
