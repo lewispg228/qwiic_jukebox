@@ -38,6 +38,8 @@
 
 // also some code by graham
 
+#define GLOBAL_DEBUG 1
+
 #include <Wire.h>
 
 #include "SparkFun_Qwiic_MP3_Trigger_Arduino_Library.h" //http://librarymanager/All#SparkFun_MP3_Trigger
@@ -68,12 +70,12 @@ byte lightPins[] = {7, 6, 5, 4};
 int lightValues[] = {0, 0, 0, 0};
 
 // count how many reads of the same number, to debounce IR readings
-int sameReadsCount = 0;
+int sameReadCount = 0;
 int previousRead = 0;
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("Jukebox booting up...");
   delay(2000); // wait for Qwiic MP3 board to bootup
 
@@ -112,7 +114,7 @@ void loop()
   if (
     (checkTagID() == true) // returns true if a new RFID tag has been placed, and it is found in tagList
     ||
-    (checkIRID(true) == true) // returns true if new IR card has been placed in pocket reader, updates global track variable if non-zero.
+    (checkIRID() == true) // returns true if new IR card has been placed in pocket reader, updates global track variable if non-zero.
   )
   {
     Serial.println("new tag detected");
@@ -204,5 +206,10 @@ void loop()
         }
     }
   }
-  delay(100); // debounce
+  if(GLOBAL_DEBUG)
+  {
+    Serial.print("\ttrack: ");
+    Serial.println(track);
+  }
+  delay(50); // debounce
 }
