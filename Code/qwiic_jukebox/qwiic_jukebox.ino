@@ -137,6 +137,8 @@ void loop()
           break;
         }
     }
+    mp3.playFile(0); // "bing"
+    delay(500);
   }
 
   if (digitalRead(playPin) == LOW)
