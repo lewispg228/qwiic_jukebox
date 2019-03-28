@@ -1,51 +1,11 @@
 /*
-   Proving out the "punch card method"
-   4 light sensors are looking for ambient light.
-   a cardboard "key" is placed over the light sensors, so as to block out certain sensors.
+   Proving out the "IR binary card method"
+   4 IR sensors (in a row) are looking for light/dark readings
+   They are located inside a "pocket" where you can slide a card into it with markings on one side.
+   a cardboard "key" is placed over the IR sensors, with black/white pattern of a binary number.
    Reading which one's are "dark" we can see which card is preset.
-   Each card has 4 spots on it, and you can hole punch out the binary number.
-   punched = set, unpunched = cleared.
+   Each card has 4 spots on it, and you can draw in with a dark marker the binary number.
 */
-
-
-
-// the 4 light sensors
-byte lightPins[] = {7, 6, 5, 4};
-
-// store the light values in an array
-int lightValues[] = {0, 0, 0, 0};
-
-byte track = 0; /// global variable to store current selected track
-
-void setup() {
-  // put your setup code here, to run once:
-  for (int i = 0 ; i < 4 ; i++)
-  {
-    pinMode(lightPins[i], INPUT);
-  }
-
-  pinMode(3, OUTPUT);    // GND
-  digitalWrite(3, LOW);
-  pinMode(2, OUTPUT);    // VCC
-  digitalWrite(2, HIGH);
-
-  Serial.begin(9600);
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-  delay(100);
-  if (checkIRID() == true)
-  {
-    Serial.print("new IRID.");
-  }
-  Serial.println(track);
-  //readLightSensors();
-  //printLightValues();
-  //blink(track);
-  //delay(1000);
-
-}
 
 boolean checkIRID()
 {
@@ -88,11 +48,8 @@ void readLightSensors()
 {
   for (int i = 0 ; i < 4 ; i++)
   {
-    //delay(5);
-    //lightValues[i] = analogRead(lightPins[i]);
     lightValues[i] = readQD(lightPins[i]);
   }
-  valuesToNumber();
 }
 
 void printLightValues()
@@ -165,17 +122,4 @@ int readQD(byte QRE1113_Pin)
   }
   int diff = (micros() - time);
   return diff;
-}
-
-void blink(byte times)
-{
-  pinMode(13, OUTPUT);
-  for (int i = 0 ; i < times ; i++)
-  {
-    digitalWrite(13, HIGH);
-    delay(100);
-    digitalWrite(13, LOW);
-    delay(500);
-  }
-
 }

@@ -57,12 +57,29 @@ byte jukebox_status = STOPPED;
 
 boolean paused = false;
 
+
+// the 4 IR sensors
+byte lightPins[] = {7, 6, 5, 4};
+
+// store the light values in an array
+int lightValues[] = {0, 0, 0, 0};
+
 void setup()
 {
   Serial.begin(9600);
 
   pinMode(playPin, INPUT_PULLUP);
   pinMode(stopPin, INPUT_PULLUP);
+
+  for (int i = 0 ; i < 4 ; i++)
+  {
+    pinMode(lightPins[i], INPUT);
+  }
+
+  pinMode(3, OUTPUT);    // GND
+  digitalWrite(3, LOW);
+  pinMode(2, OUTPUT);    // VCC
+  digitalWrite(2, HIGH);
 
   Wire.begin();
 
@@ -82,7 +99,11 @@ void setup()
 
 void loop()
 {
-  if (checkTagID() == true) // returns true if a new RFID tag has been placed, and it is found in tagList
+  if (
+    (checkTagID() == true) // returns true if a new RFID tag has been placed, and it is found in tagList
+    ||
+    (checkIRID() == true) // returns true if new IR card has been placed in pocket reader, updates global track variable if non-zero.
+  )
   {
     Serial.println("new tag detected");
     Serial.print("track: ");
@@ -143,7 +164,7 @@ void loop()
           jukebox_status = PAUSED;
           while (digitalRead(stopPin) == LOW) // wait for release
             delay(100); // debounce
-            
+
           // button has been released
           // count how long it's been HIGH, if too long, then consider it a "single press" (aka STOP)
           int counter = 0;
