@@ -67,6 +67,10 @@ byte lightPins[] = {7, 6, 5, 4};
 // store the light values in an array
 int lightValues[] = {0, 0, 0, 0};
 
+// count how many reads of the same number, to debounce IR readings
+int sameReadsCount = 0;
+int previousRead = 0;
+
 void setup()
 {
   Serial.begin(9600);

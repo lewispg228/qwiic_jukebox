@@ -9,39 +9,61 @@
 
 boolean checkIRID(boolean debug)
 {
-  // pull in 4 readings
-  // make sure they are the same.
+  // take one reading
+  // compare it to previousRead. if the same, increment sameReadCount.
+  // if sameReadCount == 4, then...
   // adjust global track variable.
   // return true.
 
-  byte trackReadings[] = {0, 0, 0, 0}; // used to store 4 sequencial readings.
+  byte currentRead = 0;
 
-  if(debug) Serial.print("trackReadings:");
-  for (byte i = 0 ; i < 4 ; i++)
-  {
-    readLightSensors();
-    trackReadings[i] = valuesToNumber();
-    if(debug) Serial.print(trackReadings[i]);
-    delay(100);
-  }
-  if(debug) Serial.println();
+  readLightSensors();
+  currentRead = valuesToNumber();
+
+  if ( previousRead == currentRead) sameReadCount++;
+  else sameReadCount = 0; // reset
+
   if (
     (trackReadings[0] != track) &&    // only report changes (i.e. something new)
     (trackReadings[0] != 0) &&        // "0" means there is no card in there.
-    (trackReadings[0] == trackReadings[1]) &&
-    (trackReadings[0] == trackReadings[2]) &&
-    (trackReadings[0] == trackReadings[3])
+    (sameReadCount == 4)
   )
   {
-    //Serial.println("four in a row");
-    track = trackReadings[0];
+    sameReadCount = 0; // reset.
+    track = currentRead;
     return true;
   }
-  else
-  {
-    //Serial.println("error");
-    return false;
-  }
+  if (debug) Serial.println(sameReadCount);
+  return false; // if we get here, then we didn't yet see a good reading.
+
+  //  byte trackReadings[] = {0, 0, 0, 0}; // used to store 4 sequencial readings.
+  //
+  //  if(debug) Serial.print("trackReadings:");
+  //  for (byte i = 0 ; i < 4 ; i++)
+  //  {
+  //    readLightSensors();
+  //    trackReadings[i] = valuesToNumber();
+  //    if(debug) Serial.print(trackReadings[i]);
+  //    delay(100);
+  //  }
+  //  if(debug) Serial.println();
+  //  if (
+  //    (trackReadings[0] != track) &&    // only report changes (i.e. something new)
+  //    (trackReadings[0] != 0) &&        // "0" means there is no card in there.
+  //    (trackReadings[0] == trackReadings[1]) &&
+  //    (trackReadings[0] == trackReadings[2]) &&
+  //    (trackReadings[0] == trackReadings[3])
+  //  )
+  //  {
+  //    //Serial.println("four in a row");
+  //    track = trackReadings[0];
+  //    return true;
+  //  }
+  //  else
+  //  {
+  //    //Serial.println("error");
+  //    return false;
+  //  }
 }
 
 void readLightSensors()
